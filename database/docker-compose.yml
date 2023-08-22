@@ -1,0 +1,19 @@
+version: '3.9'
+
+name: rfid
+
+volumes:
+  data:
+
+services:
+  postgres:
+    restart: always
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=icct#12345
+      - POSTGRES_DB=rfid
+    ports:
+      - 49153:5432
+    volumes:
+      - data:/var/lib/postgresql
