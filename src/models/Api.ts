@@ -30,7 +30,7 @@ export const Api = sequelize.define<ApiInstance>('Api', {
 //Lines Model
 export interface LinesInstance extends Model {
     number: string;
-    ip_line: string;
+    mac_line: string;
     ip_terminal: string;
 }
 
@@ -38,7 +38,7 @@ export const Lines = sequelize.define<LinesInstance>('Lines', {
     number: {
         type: DataTypes.STRING
     },
-    ip_line: {
+    mac_line: {
         type: DataTypes.STRING
     },
     ip_terminal: {

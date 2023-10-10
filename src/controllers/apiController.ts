@@ -61,20 +61,24 @@ setInterval(async () => {
 
                 const setMachine = new Set();
 
+                let filterMachine;
+
                 let machine = await verify(item.ip_terminal, item.number);
 
-                const filterMachine = machine.data.filter((machine: any) => {
-                    const dupMachine = setMachine.has(machine.reading_epc_hex);
-                    setMachine.add(machine.reading_epc_hex);
-                    return !dupMachine;
-                });
+                if(machine != undefined){
+                    filterMachine = machine.data.filter((machine: any) => {
+                        const dupMachine = setMachine.has(machine.reading_epc_hex);
+                        setMachine.add(machine.reading_epc_hex);
+                        return !dupMachine;
+                    });
+                }
 
                 if(filterMachine != undefined){
                     if(filterMachine.length > 0){
                         filterMachine.forEach(async (item2: any) => {
                             const location: any = await Lines.findAll({
                                 where:{
-                                    ip_line: {
+                                    ip_terminal: {
                                         [Op.iLike]: `%${item2.reading_reader_ip}%`
                                     }
                                 }
@@ -90,11 +94,12 @@ setInterval(async () => {
 
                             if(location.length > 0 && mother){
                                 if(machines.length == 0){
-                                    const now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
-            
-                                    // const hour = moment(item2.reading_created_at).subtract(1, 'hours').format("DD-MM-YYYY HH:mm:ss");
+                                    let now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
 
-                                    const hour = moment(item2.reading_created_at).format("DD-MM-YYYY HH:mm:ss");
+                                    let hour = moment(item2.reading_created_at).add(49, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+
+                                    console.log('Hour: ', hour);
+                                    console.log('Now: ', now);
         
                                     if(hour >= now){
                                         machines.push({ motherpos: mother[0].number, location: location[0].number, position: item2.reading_antenna, time: item2.reading_created_at });
@@ -103,11 +108,10 @@ setInterval(async () => {
                                     }
         
                                 }else{
-                                    const now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
-            
-                                    // const hour = moment(item2.reading_created_at).subtract(1, 'hours').format("DD-MM-YYYY HH:mm:ss");
+                                    let now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
 
-                                    const hour = moment(item2.reading_created_at).format("DD-MM-YYYY HH:mm:ss");
+                                    let hour = moment(item2.reading_created_at).add(49, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+
         
                                     if(hour >= now){
                                         let find = machines.findIndex((item3: any) => (item3 != null && (mother[0].number == item3.motherpos && location[0].number == item3.location && item3.position == item2.reading_antenna)));
@@ -131,18 +135,19 @@ setInterval(async () => {
             }else{
                 for(let i = 1; i <= 4; i++){
                     let machine = await verify(item.ip_terminal, i);
+                    
+                    if(machine != undefined){
 
-                    if(machine =! undefined){
                         if(machine.dados != undefined){
-                            const location: any = await Lines.findAll({
+                            let location: any = await Lines.findAll({
                                 where:{
-                                    ip_line: {
-                                        [Op.iLike]: `%${machine.dados[0].tag_reader_ip}%`
+                                    mac_line: {
+                                        [Op.iLike]: `%${machine.dados[0].tag_reader_mac}%`
                                     }
                                 }
                             });
         
-                            const mother: any = await Mother.findAll({
+                            let mother: any = await Mother.findAll({
                                 where:{
                                     tag_code: {
                                         [Op.iLike]: `%${machine.dados[0].tag_epc}%`
@@ -152,9 +157,9 @@ setInterval(async () => {
         
                             if(location.length > 0 && mother){
                                 if(machines.length == 0){
-                                    const now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                                    let now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
             
-                                    const hour = moment(machine.dados[0].tag_read_date).subtract(1, 'hours').format("DD-MM-YYYY HH:mm:ss");
+                                    let hour = moment(machine.dados[0].tag_read_date).subtract(3540, 'seconds').format("DD-MM-YYYY HH:mm:ss");
         
                                     if(hour >= now){
                                         machines.push({ motherpos: mother[0].number, location: location[0].number, position: machine.dados[0].tag_read_antenna, time: machine.dados[0].tag_read_date });
@@ -163,9 +168,9 @@ setInterval(async () => {
                                     }
         
                                 }else{
-                                    const now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                                    let now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
             
-                                    const hour = moment(machine.dados[0].tag_read_date).subtract(1, 'hours').format("DD-MM-YYYY HH:mm:ss");
+                                    let hour = moment(machine.dados[0].tag_read_date).subtract(3540, 'seconds').format("DD-MM-YYYY HH:mm:ss");
         
                                     if(hour >= now){
                                         let find = machines.findIndex((item2: any) => (item2 != null && (mother[0].number == item2.motherpos && location[0].number == item2.location && item2.position == machine.dados[0].tag_read_antenna)));
@@ -192,11 +197,14 @@ setInterval(async () => {
     if(machines.length > 0){
         machines.forEach(async (item: any, index: any) => {
             if(item != null){
-                const now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                let now = moment().subtract(3, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                let hour;
     
-                // const hour = moment(item.time).subtract(1, 'hours').format("DD-MM-YYYY HH:mm:ss");
-
-                const hour = moment(item.time).format("DD-MM-YYYY HH:mm:ss");
+                if(item.location == 'security'){
+                    hour = moment(item.time).add(49, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                }else{
+                    hour = moment(item.time).subtract(3540, 'seconds').format("DD-MM-YYYY HH:mm:ss");
+                }
     
                 if(hour < now){
                     await Api.create({ motherpos: item.motherpos, location: item.location, position: item.position, status: 'output' });
